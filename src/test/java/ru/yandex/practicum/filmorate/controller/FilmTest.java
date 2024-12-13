@@ -98,7 +98,7 @@ public class FilmTest {
 
     //  Правильный сценарий создания
     @Test
-    public void FilmCreate() {
+    public void FilmCreateGod() {
         Film film = Film.builder()
                 .name("Super")
                 .description("Super description")
