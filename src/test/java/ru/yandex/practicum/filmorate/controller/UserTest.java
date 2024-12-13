@@ -82,7 +82,7 @@ public class UserTest {
 
     //    имя для отображения может быть пустым — в таком случае будет использован логин;
     @Test
-    public void WhenUserNameNullLoginEqualName() {
+    public void whenUserNameNullLoginEqualName() {
         User user = User.builder()
                 .email("yandex@mail.ru")
                 .login("turbo")
@@ -95,7 +95,7 @@ public class UserTest {
 
     //    дата рождения не может быть в будущем.
     @Test
-    public void WhenUserBirthdayFutureError() {
+    public void whenUserBirthdayFutureError() {
         User user = User.builder()
                 .email("yandex@mail.ru")
                 .login("turbo")
