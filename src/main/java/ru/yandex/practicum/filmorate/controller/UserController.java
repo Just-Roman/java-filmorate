@@ -28,9 +28,7 @@ public class UserController {
         log.debug("POST, create user {}", user);
         cloneSearchEmail(user);
         user.setId(getNextId());
-        if (user.getName() == null) {
-            user.setName(user.getLogin());
-        }
+        checkUserName(user);
         users.put(user.getId(), user);
         return user;
     }
@@ -43,7 +41,7 @@ public class UserController {
         User oldUser = users.get(id);
         String newEmail = newUser.getEmail();
         String newLogin = newUser.getLogin();
-        if (newUser.getName() != null) oldUser.setName(newUser.getName());
+        oldUser.setName(newUser.getName());
         if (newUser.getBirthday() != null) oldUser.setBirthday(newUser.getBirthday());
         if (!oldUser.getEmail().equals(newEmail)) oldUser.setEmail(newEmail);
         if (!oldUser.getLogin().equals(newLogin)) oldUser.setLogin(newLogin);
@@ -62,8 +60,15 @@ public class UserController {
         }
     }
 
+    private void checkUserName(User user) {
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
+        }
+    }
+
     private Integer validateUpdate(User newUser) {
         log.debug("validateUpdate start for {}", newUser);
+        checkUserName(newUser);
         String newEmail = newUser.getEmail();
         if (newUser.getId() == null) {
             String msg = "Id должен быть указан";

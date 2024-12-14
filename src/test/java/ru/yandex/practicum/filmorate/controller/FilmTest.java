@@ -35,8 +35,11 @@ public class FilmTest {
     @Test
     public void whenFilmNameIsEmptyThenThrow() {
         Film film = Film.builder()
-                .name(" ")
+                .name("")
+                .releaseDate(LocalDate.of(1895, 12, 28))
+                .duration(1)
                 .build();
+//        Пусто
         Set<ConstraintViolation<Film>> violation = validator.validate(film);
         assertEquals(1, violation.size());
     }
@@ -54,7 +57,9 @@ public class FilmTest {
                 "1234567890123456789012345678901234567890";
         Film film = Film.builder()
                 .name("Super")
+                .releaseDate(LocalDate.of(1895, 12, 28))
                 .description(twoHundredOneSymbols)
+                .duration(1)
                 .build();
         Set<ConstraintViolation<Film>> violation = validator.validate(film);
         assertEquals(1, violation.size());

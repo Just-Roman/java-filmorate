@@ -18,7 +18,9 @@ public class Film {
     private String name;
     @Size(max = 200)
     private String description;
+    @NotNull
     private LocalDate releaseDate;
     @Positive
+    @NotNull
     private Integer duration;
 }

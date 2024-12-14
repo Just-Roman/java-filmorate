@@ -36,6 +36,7 @@ public class UserTest {
         User user = User.builder()
                 .email(null)
                 .login("turbo")
+                .birthday(LocalDate.of(2024, 12, 12))
                 .build();
 //         null, Пусто
         Set<ConstraintViolation<User>> violationNullOrBlank = validator.validate(user);
@@ -61,6 +62,7 @@ public class UserTest {
     public void whenUserLoginNullOrBlankError() {
         User user = User.builder()
                 .email("yandex@mail.ru")
+                .birthday(LocalDate.of(2024, 12, 12))
                 .login(null)
                 .build();
 
@@ -86,6 +88,7 @@ public class UserTest {
         User user = User.builder()
                 .email("yandex@mail.ru")
                 .login("turbo")
+                .birthday(LocalDate.of(2024, 12, 12))
                 .build();
         Set<ConstraintViolation<User>> violationGod = validator.validate(user);
         assertEquals(0, violationGod.size());

@@ -27,7 +27,6 @@ public class FilmController {
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         log.debug("POST, create film {}", film);
-        validateCloneName(film);
         validateReleaseDate(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -46,10 +45,9 @@ public class FilmController {
             String newDescription = filmUpdate.getDescription();
             if (!newDescription.equals(oldFilm.getDescription())) oldFilm.setDescription(newDescription);
         }
-        if (filmUpdate.getReleaseDate() != null) {
-            LocalDate newReleaseDate = filmUpdate.getReleaseDate();
-            if (!newReleaseDate.equals(oldFilm.getReleaseDate())) oldFilm.setReleaseDate(newReleaseDate);
-        }
+        LocalDate newReleaseDate = filmUpdate.getReleaseDate();
+        if (!newReleaseDate.equals(oldFilm.getReleaseDate())) oldFilm.setReleaseDate(newReleaseDate);
+
         if (filmUpdate.getDuration() != null) {
             Integer newDuration = filmUpdate.getDuration();
             if (!newDuration.equals(oldFilm.getDuration())) oldFilm.setDuration(newDuration);
@@ -61,24 +59,10 @@ public class FilmController {
     private void validateReleaseDate(Film film) {
         log.debug("validateReleaseDate start for {}", film);
         LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
-        if (film.getReleaseDate() != null) {
-            if (film.getReleaseDate().isBefore(birthdayFilm)) {
-                String msg = "дата релиза — не раньше 28 декабря 1895 года";
-                log.error(msg);
-                throw new ValidationException(msg);
-            }
-        }
-    }
-
-    private void validateCloneName(Film film) {
-        log.debug("validateCloneName start for {}", film);
-        String name = film.getName();
-        for (Film filmMap : films.values()) {
-            if (filmMap.getName().equals(name)) {
-                String msg = "Название фильма уже есть в базе";
-                log.error(msg);
-                throw new ValidationException(msg);
-            }
+        if (film.getReleaseDate().isBefore(birthdayFilm)) {
+            String msg = "дата релиза — не раньше 28 декабря 1895 года";
+            log.error(msg);
+            throw new ValidationException(msg);
         }
     }
 
@@ -95,8 +79,6 @@ public class FilmController {
             String msg = "Фильм с id = " + id + " не найден";
             log.error(msg);
             throw new NotFoundException(msg);
-        } else if (!films.get(id).getName().equals(newName)) {
-            validateCloneName(film);
         }
         validateReleaseDate(film);
         return id;
