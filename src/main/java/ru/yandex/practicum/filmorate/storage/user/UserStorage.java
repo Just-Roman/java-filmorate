@@ -6,15 +6,27 @@ import java.util.Collection;
 
 public interface UserStorage {
 
-     Collection<User> getAll();
+    Collection<User> getAll();
 
-     User create(User user);
+    User getUserById(int id);
 
-     User update(User newUser);
+    User create(User user);
 
-     void cloneSearchEmail(User user);
+    User update(User newUser);
 
-     void checkOrAddUserName(User user);
+    User addToFriend(int userId, int friendsId);
 
-     Integer validateUpdate(User newUser);
+    User removeFriends(int userId, int friendsId);
+
+    Collection<User> getFriendsUser(int userId);
+
+    Collection<User> getMutualFriends(int userId, int friendsId);
+
+    void validateUserId(int id);
+
+    void cloneSearchEmail(User user);
+
+    void checkOrAddUserName(User user);
+
+    Integer validateUpdate(User newUser);
 }
