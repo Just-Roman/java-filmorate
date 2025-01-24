@@ -34,7 +34,7 @@ public class UserService {
     }
 
     public void removeFriend(int userId, int friendsId) {
-         inMemoryUserStorage.removeFriend(userId, friendsId);
+        inMemoryUserStorage.removeFriend(userId, friendsId);
     }
 
     public Collection<User> getFriendsUser(int userId) {

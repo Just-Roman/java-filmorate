@@ -1,28 +1,33 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.IdGenerator;
 
 import java.time.LocalDate;
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
-    @Autowired
-    private final IdGenerator idGenerator;
     private final Map<Integer, Film> films = new HashMap<>();
     private final Map<Integer, Set<Integer>> filmsLikes = new HashMap<>();
 
+    private int id = 1;
+
+    public int getNextId() {
+        return id++;
+    }
+
+
     @Override
     public Collection<Film> getAll() {
-//        log.debug("GET, all films");
+        log.debug("GET, all films");
         return films.values();
     }
 
@@ -34,16 +39,16 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-//        log.debug("POST, create film {}", film);
+        log.debug("POST, create film {}", film);
         validateReleaseDate(film);
-        film.setId(idGenerator.getNextId());
+        film.setId(getNextId());
         films.put(film.getId(), film);
         return film;
     }
 
     @Override
     public Film update(Film filmUpdate) {
-//        log.debug("PUT, update film {}", filmUpdate);
+        log.debug("PUT, update film {}", filmUpdate);
         Integer id = validateUpdate(filmUpdate);
         Film oldFilm = films.get(id);
         String newName = filmUpdate.getName();
@@ -102,7 +107,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
-        Set<Film> returnFilms = new HashSet<>();
+        List<Film> returnFilms = new ArrayList<>();
 
         if (filmsLikes.isEmpty()) {
             for (Film film : films.values()) {
@@ -115,11 +120,11 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .stream()
                 .sorted(Comparator.comparingInt(Film::getLikes))
                 .toList();
-
         sortedFilmByLike = sortedFilmByLike.reversed();
-        for (Film fim : sortedFilmByLike) {
+
+        for (Film film : sortedFilmByLike) {
             if (returnFilms.size() == sizeFilms) break;
-            returnFilms.add(fim);
+            returnFilms.add(film);
         }
 
         if (returnFilms.size() == sortedFilmByLike.size()) return returnFilms;
@@ -144,7 +149,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private void addLikeFilm(int filmId) {
         Film film = films.get(filmId);
 
-        Integer like = film.getLikes() + 1;
+        int like = film.getLikes() + 1;
         film.setLikes(like);
         films.put(filmId, film);
     }
@@ -162,11 +167,11 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public void validateReleaseDate(Film film) {
-//        log.debug("validateReleaseDate start for {}", film);
+        log.debug("validateReleaseDate start for {}", film);
         LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
         if (film.getReleaseDate().isBefore(birthdayFilm)) {
             String msg = "дата релиза — не раньше 28 декабря 1895 года";
-//            log.error(msg);
+            log.error(msg);
             throw new ValidationException(msg);
         }
 
@@ -174,17 +179,17 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Integer validateUpdate(Film film) {
-//        log.debug("validateUpdate start for {}", film);
+        log.debug("validateUpdate start for {}", film);
         String newName = film.getName();
         if (film.getId() == null) {
             String msg = "Id должен быть указан";
-//            log.error(msg);
+            log.error(msg);
             throw new ValidationException(msg);
         }
         Integer id = film.getId();
         if (!films.containsKey(id)) {
             String msg = "Фильм с id = " + id + " не найден";
-//            log.error(msg);
+            log.error(msg);
             throw new NotFoundException(msg);
         }
         validateReleaseDate(film);

@@ -6,7 +6,9 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -23,11 +25,12 @@ public class UserTest {
         validator = validatorFactory.usingContext().getValidator();
     }
 
-    private UserController userController;
+    @Autowired
+    private InMemoryUserStorage inMemoryUserStorage;
 
     @BeforeEach
     public void setUp() {
-        userController = new UserController();
+        inMemoryUserStorage = new InMemoryUserStorage();
     }
 
     //    электронная почта не может быть пустой и должна содержать символ @;
@@ -92,7 +95,7 @@ public class UserTest {
                 .build();
         Set<ConstraintViolation<User>> violationGod = validator.validate(user);
         assertEquals(0, violationGod.size());
-        User createdUser = userController.create(user);
+        User createdUser = inMemoryUserStorage.create(user);
         assertEquals(createdUser.getName(), user.getLogin());
     }
 
@@ -122,7 +125,7 @@ public class UserTest {
                 .build();
         Set<ConstraintViolation<User>> violation = validator.validate(user);
         assertEquals(0, violation.size());
-        assertDoesNotThrow(() -> userController.create(user));
+        assertDoesNotThrow(() -> inMemoryUserStorage.create(user));
     }
 
 
@@ -137,7 +140,7 @@ public class UserTest {
                 .build();
         Set<ConstraintViolation<User>> violation = validator.validate(user);
         assertEquals(0, violation.size());
-        assertDoesNotThrow(() -> userController.create(user));
+        assertDoesNotThrow(() -> inMemoryUserStorage.create(user));
 
 //        обновляем
         user.setId(1);
@@ -147,7 +150,7 @@ public class UserTest {
         user.setBirthday(LocalDate.of(2023, 12, 12));
         Set<ConstraintViolation<User>> violation2 = validator.validate(user);
         assertEquals(0, violation2.size());
-        User createdUser = userController.update(user);
+        User createdUser = inMemoryUserStorage.update(user);
         assertEquals(user.toString(), createdUser.toString());
 
 

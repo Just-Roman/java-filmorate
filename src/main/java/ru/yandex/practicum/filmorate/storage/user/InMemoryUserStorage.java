@@ -1,28 +1,31 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.InternalServerErrorException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.IdGenerator;
 
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
-    @Autowired
-    private final IdGenerator idGenerator;
     private final Map<Integer, User> users = new HashMap<>();
     private final Map<Integer, Set<Integer>> userFriends = new HashMap<>();
 
+    private int id = 1;
+
+    public int getNextId() {
+        return id++;
+    }
+
     @Override
     public Collection<User> getAll() {
-//        log.debug("GET, all users");
+        log.debug("GET, all users");
         return users.values();
     }
 
@@ -35,9 +38,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User create(User user) {
-//        log.debug("POST, create user {}", user);
+        log.debug("POST, create user {}", user);
         cloneSearchEmail(user);
-        user.setId(idGenerator.getNextId());
+        user.setId(getNextId());
         checkOrAddUserName(user);
         users.put(user.getId(), user);
         return user;
@@ -45,7 +48,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User newUser) {
-//        log.debug("PUT, update User {}", newUser);
+        log.debug("PUT, update User {}", newUser);
         Integer id = validateUpdate(newUser);
         User oldUser = users.get(id);
         String newEmail = newUser.getEmail();
@@ -118,7 +121,7 @@ public class InMemoryUserStorage implements UserStorage {
         List<User> friends = new ArrayList<>();
         if (!checkUserFriends(userId)) {
             return friends;
-       }
+        }
 
         for (int id : friendsIds) {
             friends.add(users.get(id));
@@ -155,12 +158,12 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public void cloneSearchEmail(User user) {
-//        log.debug("cloneSearchEmail start for {}", user);
+        log.debug("cloneSearchEmail start for {}", user);
         String newEmail = user.getEmail();
         for (User userMap : users.values()) {
             if (userMap.getEmail().equals(newEmail)) {
                 String msg = "Этот Email уже используется";
-//                log.error(msg);
+                log.error(msg);
                 throw new ValidationException(msg);
             }
         }
@@ -175,18 +178,18 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Integer validateUpdate(User newUser) {
-//        log.debug("validateUpdate start for {}", newUser);
+        log.debug("validateUpdate start for {}", newUser);
         checkOrAddUserName(newUser);
         String newEmail = newUser.getEmail();
         if (newUser.getId() == null) {
             String msg = "Id должен быть указан";
-//            log.error(msg);
+            log.error(msg);
             throw new ValidationException(msg);
         }
         Integer id = newUser.getId();
         if (!users.containsKey(id)) {
             String msg = "Пользователь с id = " + newUser.getId() + " не найден";
-//            log.error(msg);
+            log.error(msg);
             throw new NotFoundException(msg);
         }
         if (!newEmail.equals(users.get(id).getEmail())) {
