@@ -1,23 +1,24 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.IdGenerator;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
+    @Autowired
     private final IdGenerator idGenerator;
     private final Map<Integer, Film> films = new HashMap<>();
+    private final Map<Integer, Set<Integer>> filmsLikes = new HashMap<>();
 
     @Override
     public Collection<Film> getAll() {
@@ -62,43 +63,102 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film addLike(Film film, User user) {
-        film.getLikes().add(user.getId());
-        int id = film.getId();
-        films.put(id, film);
-        return films.get(id);
+    public Map<Film, Set<Integer>> addLike(int filmId, int userId) {
+        validateFilmId(filmId);
+
+        if (checkFilmsLikes(filmId)) {
+            Set<Integer> likes = filmsLikes.get(filmId);
+
+            if (likes.add(userId)) {
+                addLikeFilm(filmId);
+            }
+            filmsLikes.put(filmId, likes);
+        } else {
+            addLikeFilm(filmId);
+
+            Set<Integer> likes = new HashSet<>();
+            likes.add(userId);
+            filmsLikes.put(filmId, likes);
+        }
+
+        return Map.of(films.get(filmId), filmsLikes.get(filmId));
     }
 
     @Override
-    public Film removeLike(Integer filmId, Integer userId) {
+    public void removeLike(Integer filmId, Integer userId) {
         validateFilmId(filmId);
-        Film film = films.get(filmId);
-        film.getLikes().remove(userId);
-        films.put(filmId, film);
-        return films.get(filmId);
+
+        if (checkFilmsLikes(filmId)) {
+            Set<Integer> likes = filmsLikes.get(filmId);
+            likes.remove(userId);
+            removeLikeFilm(filmId);
+            if (likes.isEmpty()) {
+                filmsLikes.remove(filmId);
+            } else {
+                filmsLikes.put(filmId, likes);
+            }
+        }
     }
 
     @Override
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
+        Set<Film> returnFilms = new HashSet<>();
 
-        List<Film> filmsSortedByLikes = films.values()
-                .stream()
-                .sorted(Comparator.comparingInt(Film::getLikesSize))
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        List<Film> returnSortedFilms = new ArrayList<>();
-
-        for (int i = 0; i < sizeFilms; i++) {
-            if (filmsSortedByLikes.size() < i + 1) break;
-            returnSortedFilms.add(filmsSortedByLikes.get(i));
+        if (filmsLikes.isEmpty()) {
+            for (Film film : films.values()) {
+                if (returnFilms.size() == sizeFilms) break;
+                returnFilms.add(film);
+            }
+            return returnFilms;
         }
-        return returnSortedFilms;
+        List<Film> sortedFilmByLike = films.values()
+                .stream()
+                .sorted(Comparator.comparingInt(Film::getLikes))
+                .toList();
+
+        sortedFilmByLike = sortedFilmByLike.reversed();
+        for (Film fim : sortedFilmByLike) {
+            if (returnFilms.size() == sizeFilms) break;
+            returnFilms.add(fim);
+        }
+
+        if (returnFilms.size() == sortedFilmByLike.size()) return returnFilms;
+
+        for (Film film : films.values()) {
+            if (returnFilms.size() == sizeFilms) break;
+            returnFilms.add(film);
+        }
+        return returnFilms;
     }
 
     @Override
     public void validateFilmId(Integer id) {
-        if (!films.containsKey(id)) throw new NotFoundException("Фильм с id=%d не найден");
+        if (!films.containsKey(id)) throw new NotFoundException("Фильм с id: " + id + " не найден");
     }
+
+    @Override
+    public boolean checkFilmsLikes(int id) {
+        return filmsLikes.containsKey(id);
+    }
+
+    private void addLikeFilm(int filmId) {
+        Film film = films.get(filmId);
+
+        Integer like = film.getLikes() + 1;
+        film.setLikes(like);
+        films.put(filmId, film);
+    }
+
+    private void removeLikeFilm(int filmId) {
+        Film film = films.get(filmId);
+        int like = film.getLikes();
+
+        if (like != 0) {
+            film.setLikes(like - 1);
+            films.put(filmId, film);
+        }
+    }
+
 
     @Override
     public void validateReleaseDate(Film film) {

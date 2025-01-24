@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.exception;
 
-class ErrorResponse {
+public class ErrorResponse {
     private final String error;
     private final String description;
 

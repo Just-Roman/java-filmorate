@@ -24,9 +24,6 @@ public class Film {
     @Positive
     @NotNull
     private Integer duration;
-    private Set<Integer> likes;
+    private int likes;
 
-    public int getLikesSize() {
-        return likes.size();
-    }
 }

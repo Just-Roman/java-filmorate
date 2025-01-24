@@ -4,6 +4,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public interface FilmStorage {
 
@@ -15,13 +17,15 @@ public interface FilmStorage {
 
     Film update(Film filmUpdate);
 
-    Film addLike(Film film, User user);
+    Map<Film, Set<Integer>> addLike(int filmId, int userId);
 
-    Film removeLike(Integer filmId, Integer userId);
+    void removeLike(Integer filmId, Integer userId);
 
     Collection<Film> getFilmsByLike(Integer sizeFilms);
 
     void validateFilmId(Integer id);
+
+    boolean checkFilmsLikes(int id);
 
     void validateReleaseDate(Film film);
 

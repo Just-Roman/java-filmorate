@@ -26,7 +26,5 @@ public class User {
     @Past
     @NotNull
     private LocalDate birthday;
-    private Set<Integer> friends;
-
 
 }

@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.InternalServerErrorException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -13,8 +15,10 @@ import java.util.*;
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
+    @Autowired
     private final IdGenerator idGenerator;
     private final Map<Integer, User> users = new HashMap<>();
+    private final Map<Integer, Set<Integer>> userFriends = new HashMap<>();
 
     @Override
     public Collection<User> getAll() {
@@ -54,50 +58,72 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User addToFriend(int userId, int friendsId) {
+    public Map<User, Set<Integer>> addToFriend(int userId, int friendsId) {
         validateUserId(userId);
         validateUserId(friendsId);
 
-        User user = users.get(userId);
-        User userFriends = users.get(friendsId);
+        if (checkUserFriends(userId)) {
+            Set<Integer> friendsIds = userFriends.get(userId);
+            friendsIds.add(friendsId);
+            userFriends.put(userId, friendsIds);
+        } else {
+            Set<Integer> friendsIds = new HashSet<>();
+            friendsIds.add(friendsId);
+            userFriends.put(userId, friendsIds);
+        }
 
-        user.getFriends().add(friendsId);
-        userFriends.getFriends().add(userId);
-
-        users.put(userId, user);
-        users.put(friendsId, userFriends);
-
-        return userFriends;
+        if (checkUserFriends(friendsId)) {
+            Set<Integer> friendsIds = userFriends.get(friendsId);
+            friendsIds.add(userId);
+            userFriends.put(friendsId, friendsIds);
+        } else {
+            Set<Integer> friendsIds = new HashSet<>();
+            friendsIds.add(userId);
+            userFriends.put(friendsId, friendsIds);
+        }
+        return Map.of(users.get(userId), userFriends.get(userId),
+                users.get(friendsId), userFriends.get(friendsId));
     }
 
     @Override
-    public User removeFriends(int userId, int friendsId) {
+    public void removeFriend(int userId, int friendsId) {
         validateUserId(userId);
         validateUserId(friendsId);
 
-        User user = users.get(userId);
-        User userFriends = users.get(friendsId);
+        if (checkUserFriends(userId)) {
+            Set<Integer> friendsIds = userFriends.get(userId);
+            friendsIds.remove(friendsId);
+            if (friendsIds.isEmpty()) {
+                userFriends.remove(userId);
+            } else {
+                userFriends.put(userId, friendsIds);
+            }
+        }
 
-        user.getFriends().remove(friendsId);
-        userFriends.getFriends().remove(userId);
-
-        users.put(userId, user);
-        users.put(friendsId, userFriends);
-
-        return userFriends;
+        if (checkUserFriends(friendsId)) {
+            Set<Integer> friendsIds = userFriends.get(friendsId);
+            friendsIds.remove(userId);
+            if (friendsIds.isEmpty()) {
+                userFriends.remove(friendsId);
+            } else {
+                userFriends.put(friendsId, friendsIds);
+            }
+        }
     }
 
     @Override
     public Collection<User> getFriendsUser(int userId) {
         validateUserId(userId);
-        User user = users.get(userId);
-        Set<Integer> friendsId = user.getFriends();
-        List<User> userFriends = new ArrayList<>();
+        Set<Integer> friendsIds = userFriends.get(userId);
+        List<User> friends = new ArrayList<>();
+        if (!checkUserFriends(userId)) {
+            return friends;
+       }
 
-        for (int id : friendsId) {
-            userFriends.add(users.get(id));
+        for (int id : friendsIds) {
+            friends.add(users.get(id));
         }
-        return userFriends;
+        return friends;
     }
 
     @Override
@@ -105,11 +131,8 @@ public class InMemoryUserStorage implements UserStorage {
         validateUserId(userId);
         validateUserId(friendsId);
 
-        User user1 = users.get(userId);
-        User user2 = users.get(friendsId);
-
-        Set<Integer> user1FriendsId = user1.getFriends();
-        Set<Integer> user2FriendsId = user2.getFriends();
+        Set<Integer> user1FriendsId = userFriends.get(userId);
+        Set<Integer> user2FriendsId = userFriends.get(friendsId);
         List<User> mutualFriends = new ArrayList<>();
 
         for (int id1 : user1FriendsId) {
@@ -122,7 +145,12 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public void validateUserId(int id) {
-        if (!users.containsKey(id)) throw new NotFoundException("Пользователь с id=%d не найден");
+        if (!users.containsKey(id)) throw new NotFoundException("Пользователь с id: " + id + " не найден");
+    }
+
+    @Override
+    public boolean checkUserFriends(int id) {
+        return userFriends.containsKey(id);
     }
 
     @Override

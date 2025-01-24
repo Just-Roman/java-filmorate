@@ -1,16 +1,20 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
 public class UserService {
 
+    @Autowired
     private InMemoryUserStorage inMemoryUserStorage;
 
     public Collection<User> getAll() {
@@ -25,12 +29,12 @@ public class UserService {
         return inMemoryUserStorage.update(newUser);
     }
 
-    public User addToFriend(int userId, int friendsId) {
+    public Map<User, Set<Integer>> addToFriend(int userId, int friendsId) {
         return inMemoryUserStorage.addToFriend(userId, friendsId);
     }
 
-    public User removeFriends(int userId, int friendsId) {
-        return inMemoryUserStorage.removeFriends(userId, friendsId);
+    public void removeFriend(int userId, int friendsId) {
+         inMemoryUserStorage.removeFriend(userId, friendsId);
     }
 
     public Collection<User> getFriendsUser(int userId) {

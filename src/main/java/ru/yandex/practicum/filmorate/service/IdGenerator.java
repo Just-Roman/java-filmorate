@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class IdGenerator {
-    private int id;
+    private int id = 1;
 
     public int getNextId() {
         return id++;

@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.storage.user;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public interface UserStorage {
 
@@ -14,15 +16,17 @@ public interface UserStorage {
 
     User update(User newUser);
 
-    User addToFriend(int userId, int friendsId);
+    Map<User, Set<Integer>> addToFriend(int userId, int friendsId);
 
-    User removeFriends(int userId, int friendsId);
+    void removeFriend(int userId, int friendsId);
 
     Collection<User> getFriendsUser(int userId);
 
     Collection<User> getMutualFriends(int userId, int friendsId);
 
     void validateUserId(int id);
+
+    boolean checkUserFriends(int id);
 
     void cloneSearchEmail(User user);
 
