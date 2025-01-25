@@ -25,7 +25,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Collection<User> getAll() {
-        log.debug("GET, all users");
+        log.info("GET, all users");
         return users.values();
     }
 
@@ -38,7 +38,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User create(User user) {
-        log.debug("POST, create user {}", user);
+        log.info("POST, create user {}", user);
         cloneSearchEmail(user);
         user.setId(getNextId());
         checkOrAddUserName(user);
@@ -48,15 +48,22 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User newUser) {
-        log.debug("PUT, update User {}", newUser);
+        log.info("PUT, update User {}", newUser);
         Integer id = validateUpdate(newUser);
         User oldUser = users.get(id);
         String newEmail = newUser.getEmail();
         String newLogin = newUser.getLogin();
         oldUser.setName(newUser.getName());
-        if (newUser.getBirthday() != null) oldUser.setBirthday(newUser.getBirthday());
-        if (!oldUser.getEmail().equals(newEmail)) oldUser.setEmail(newEmail);
-        if (!oldUser.getLogin().equals(newLogin)) oldUser.setLogin(newLogin);
+
+        if (newUser.getBirthday() != null) {
+            oldUser.setBirthday(newUser.getBirthday());
+        }
+        if (!oldUser.getEmail().equals(newEmail)) {
+            oldUser.setEmail(newEmail);
+        }
+        if (!oldUser.getLogin().equals(newLogin)) {
+            oldUser.setLogin(newLogin);
+        }
         return oldUser;
     }
 
@@ -66,9 +73,7 @@ public class InMemoryUserStorage implements UserStorage {
         validateUserId(friendsId);
 
         if (checkUserFriends(userId)) {
-            Set<Integer> friendsIds = userFriends.get(userId);
-            friendsIds.add(friendsId);
-            userFriends.put(userId, friendsIds);
+            userFriends.get(userId).add(friendsId);
         } else {
             Set<Integer> friendsIds = new HashSet<>();
             friendsIds.add(friendsId);
@@ -76,9 +81,7 @@ public class InMemoryUserStorage implements UserStorage {
         }
 
         if (checkUserFriends(friendsId)) {
-            Set<Integer> friendsIds = userFriends.get(friendsId);
-            friendsIds.add(userId);
-            userFriends.put(friendsId, friendsIds);
+            userFriends.get(friendsId).add(userId);
         } else {
             Set<Integer> friendsIds = new HashSet<>();
             friendsIds.add(userId);
@@ -94,22 +97,20 @@ public class InMemoryUserStorage implements UserStorage {
         validateUserId(friendsId);
 
         if (checkUserFriends(userId)) {
-            Set<Integer> friendsIds = userFriends.get(userId);
-            friendsIds.remove(friendsId);
-            if (friendsIds.isEmpty()) {
+            Set<Integer> friendsIds1 = userFriends.get(userId);
+            friendsIds1.remove(friendsId);
+            if (friendsIds1.isEmpty()) {
                 userFriends.remove(userId);
             } else {
-                userFriends.put(userId, friendsIds);
+                userFriends.put(userId, friendsIds1);
             }
-        }
 
-        if (checkUserFriends(friendsId)) {
-            Set<Integer> friendsIds = userFriends.get(friendsId);
-            friendsIds.remove(userId);
-            if (friendsIds.isEmpty()) {
+            Set<Integer> friendsIds2 = userFriends.get(friendsId);
+            friendsIds2.remove(userId);
+            if (friendsIds2.isEmpty()) {
                 userFriends.remove(friendsId);
             } else {
-                userFriends.put(friendsId, friendsIds);
+                userFriends.put(friendsId, friendsIds2);
             }
         }
     }
@@ -134,31 +135,30 @@ public class InMemoryUserStorage implements UserStorage {
         validateUserId(userId);
         validateUserId(friendsId);
 
-        Set<Integer> user1FriendsId = userFriends.get(userId);
-        Set<Integer> user2FriendsId = userFriends.get(friendsId);
-        List<User> mutualFriends = new ArrayList<>();
+        List<Integer> mutualId = new ArrayList<>(userFriends.get(userId));
+        mutualId.retainAll(userFriends.get(friendsId));
 
-        for (int id1 : user1FriendsId) {
-            for (int id2 : user2FriendsId) {
-                if (id1 == id2) mutualFriends.add(users.get(id1));
-            }
+        List<User> mutualFriends = new ArrayList<>();
+        for (Integer id : mutualId) {
+            mutualFriends.add(users.get(id));
         }
         return mutualFriends;
     }
 
     @Override
     public void validateUserId(int id) {
-        if (!users.containsKey(id)) throw new NotFoundException("Пользователь с id: " + id + " не найден");
+        if (!users.containsKey(id)) {
+            throw new NotFoundException("Пользователь с id: " + id + " не найден");
+        }
     }
 
-    @Override
-    public boolean checkUserFriends(int id) {
+    private boolean checkUserFriends(int id) {
         return userFriends.containsKey(id);
     }
 
-    @Override
-    public void cloneSearchEmail(User user) {
-        log.debug("cloneSearchEmail start for {}", user);
+
+    private void cloneSearchEmail(User user) {
+        log.info("cloneSearchEmail start for {}", user);
         String newEmail = user.getEmail();
         for (User userMap : users.values()) {
             if (userMap.getEmail().equals(newEmail)) {
@@ -169,16 +169,15 @@ public class InMemoryUserStorage implements UserStorage {
         }
     }
 
-    @Override
-    public void checkOrAddUserName(User user) {
+
+    private void checkOrAddUserName(User user) {
         if (user.getName() == null) {
             user.setName(user.getLogin());
         }
     }
 
-    @Override
-    public Integer validateUpdate(User newUser) {
-        log.debug("validateUpdate start for {}", newUser);
+    private Integer validateUpdate(User newUser) {
+        log.info("validateUpdate start for {}", newUser);
         checkOrAddUserName(newUser);
         String newEmail = newUser.getEmail();
         if (newUser.getId() == null) {

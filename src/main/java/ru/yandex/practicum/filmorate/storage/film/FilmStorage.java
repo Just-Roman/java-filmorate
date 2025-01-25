@@ -22,12 +22,4 @@ public interface FilmStorage {
 
     Collection<Film> getFilmsByLike(Integer sizeFilms);
 
-    void validateFilmId(Integer id);
-
-    boolean checkFilmsLikes(int id);
-
-    void validateReleaseDate(Film film);
-
-    Integer validateUpdate(Film film);
-
 }

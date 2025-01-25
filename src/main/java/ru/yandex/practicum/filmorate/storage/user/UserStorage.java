@@ -25,12 +25,4 @@ public interface UserStorage {
     Collection<User> getMutualFriends(int userId, int friendsId);
 
     void validateUserId(int id);
-
-    boolean checkUserFriends(int id);
-
-    void cloneSearchEmail(User user);
-
-    void checkOrAddUserName(User user);
-
-    Integer validateUpdate(User newUser);
 }

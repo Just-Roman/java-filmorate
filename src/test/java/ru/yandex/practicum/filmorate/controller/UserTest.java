@@ -6,7 +6,6 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
@@ -25,7 +24,6 @@ public class UserTest {
         validator = validatorFactory.usingContext().getValidator();
     }
 
-    @Autowired
     private InMemoryUserStorage inMemoryUserStorage;
 
     @BeforeEach

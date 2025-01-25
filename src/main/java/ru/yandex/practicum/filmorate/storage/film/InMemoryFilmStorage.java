@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -15,8 +16,11 @@ import java.util.*;
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
+    private final InMemoryUserStorage inMemoryUserStorage;
+
     private final Map<Integer, Film> films = new HashMap<>();
     private final Map<Integer, Set<Integer>> filmsLikes = new HashMap<>();
+    LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
 
     private int id = 1;
 
@@ -27,7 +31,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getAll() {
-        log.debug("GET, all films");
+        log.info("GET, all films");
         return films.values();
     }
 
@@ -39,7 +43,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        log.debug("POST, create film {}", film);
+        log.info("POST, create film {}", film);
         validateReleaseDate(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -48,27 +52,36 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film update(Film filmUpdate) {
-        log.debug("PUT, update film {}", filmUpdate);
+        log.info("PUT, update film {}", filmUpdate);
         Integer id = validateUpdate(filmUpdate);
         Film oldFilm = films.get(id);
         String newName = filmUpdate.getName();
-        if (!newName.equals(oldFilm.getName())) oldFilm.setName(newName);
+        if (!newName.equals(oldFilm.getName())) {
+            oldFilm.setName(newName);
+        }
         if (filmUpdate.getDescription() != null) {
             String newDescription = filmUpdate.getDescription();
-            if (!newDescription.equals(oldFilm.getDescription())) oldFilm.setDescription(newDescription);
+            if (!newDescription.equals(oldFilm.getDescription())) {
+                oldFilm.setDescription(newDescription);
+            }
         }
         LocalDate newReleaseDate = filmUpdate.getReleaseDate();
-        if (!newReleaseDate.equals(oldFilm.getReleaseDate())) oldFilm.setReleaseDate(newReleaseDate);
+        if (!newReleaseDate.equals(oldFilm.getReleaseDate())) {
+            oldFilm.setReleaseDate(newReleaseDate);
+        }
 
         if (filmUpdate.getDuration() != null) {
             Integer newDuration = filmUpdate.getDuration();
-            if (!newDuration.equals(oldFilm.getDuration())) oldFilm.setDuration(newDuration);
+            if (!newDuration.equals(oldFilm.getDuration())) {
+                oldFilm.setDuration(newDuration);
+            }
         }
         return oldFilm;
     }
 
     @Override
     public Map<Film, Set<Integer>> addLike(int filmId, int userId) {
+        inMemoryUserStorage.validateUserId(userId);
         validateFilmId(filmId);
 
         if (checkFilmsLikes(filmId)) {
@@ -91,6 +104,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public void removeLike(Integer filmId, Integer userId) {
+        inMemoryUserStorage.validateUserId(userId);
         validateFilmId(filmId);
 
         if (checkFilmsLikes(filmId)) {
@@ -111,7 +125,9 @@ public class InMemoryFilmStorage implements FilmStorage {
 
         if (filmsLikes.isEmpty()) {
             for (Film film : films.values()) {
-                if (returnFilms.size() == sizeFilms) break;
+                if (returnFilms.size() == sizeFilms) {
+                    break;
+                }
                 returnFilms.add(film);
             }
             return returnFilms;
@@ -123,11 +139,15 @@ public class InMemoryFilmStorage implements FilmStorage {
         sortedFilmByLike = sortedFilmByLike.reversed();
 
         for (Film film : sortedFilmByLike) {
-            if (returnFilms.size() == sizeFilms) break;
+            if (returnFilms.size() == sizeFilms) {
+                break;
+            }
             returnFilms.add(film);
         }
 
-        if (returnFilms.size() == sortedFilmByLike.size()) return returnFilms;
+        if (returnFilms.size() == sortedFilmByLike.size()) {
+            return returnFilms;
+        }
 
         for (Film film : films.values()) {
             if (returnFilms.size() == sizeFilms) break;
@@ -136,21 +156,21 @@ public class InMemoryFilmStorage implements FilmStorage {
         return returnFilms;
     }
 
-    @Override
-    public void validateFilmId(Integer id) {
-        if (!films.containsKey(id)) throw new NotFoundException("Фильм с id: " + id + " не найден");
+    private void validateFilmId(Integer id) {
+        if (!films.containsKey(id)) {
+            throw new NotFoundException("Фильм с id: " + id + " не найден");
+        }
     }
 
-    @Override
-    public boolean checkFilmsLikes(int id) {
+
+    private boolean checkFilmsLikes(int id) {
         return filmsLikes.containsKey(id);
     }
 
     private void addLikeFilm(int filmId) {
         Film film = films.get(filmId);
 
-        int like = film.getLikes() + 1;
-        film.setLikes(like);
+        film.setLikes(film.getLikes() + 1);
         films.put(filmId, film);
     }
 
@@ -164,11 +184,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
     }
 
-
-    @Override
-    public void validateReleaseDate(Film film) {
-        log.debug("validateReleaseDate start for {}", film);
-        LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
+    private void validateReleaseDate(Film film) {
+        log.info("validateReleaseDate start for {}", film);
         if (film.getReleaseDate().isBefore(birthdayFilm)) {
             String msg = "дата релиза — не раньше 28 декабря 1895 года";
             log.error(msg);
@@ -177,9 +194,8 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     }
 
-    @Override
-    public Integer validateUpdate(Film film) {
-        log.debug("validateUpdate start for {}", film);
+    private Integer validateUpdate(Film film) {
+        log.info("validateUpdate start for {}", film);
         String newName = film.getName();
         if (film.getId() == null) {
             String msg = "Id должен быть указан";
