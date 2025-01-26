@@ -101,16 +101,12 @@ public class InMemoryUserStorage implements UserStorage {
             friendsIds1.remove(friendsId);
             if (friendsIds1.isEmpty()) {
                 userFriends.remove(userId);
-            } else {
-                userFriends.put(userId, friendsIds1);
             }
 
             Set<Integer> friendsIds2 = userFriends.get(friendsId);
             friendsIds2.remove(userId);
             if (friendsIds2.isEmpty()) {
                 userFriends.remove(friendsId);
-            } else {
-                userFriends.put(friendsId, friendsIds2);
             }
         }
     }

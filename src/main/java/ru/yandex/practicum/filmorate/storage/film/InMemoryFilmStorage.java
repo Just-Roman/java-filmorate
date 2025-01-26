@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Integer, Film> films = new HashMap<>();
     private final Map<Integer, Set<Integer>> filmsLikes = new HashMap<>();
-    LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
+    private final LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
 
     private int id = 1;
 
@@ -90,7 +91,6 @@ public class InMemoryFilmStorage implements FilmStorage {
             if (likes.add(userId)) {
                 addLikeFilm(filmId);
             }
-            filmsLikes.put(filmId, likes);
         } else {
             addLikeFilm(filmId);
 
@@ -113,47 +113,17 @@ public class InMemoryFilmStorage implements FilmStorage {
             removeLikeFilm(filmId);
             if (likes.isEmpty()) {
                 filmsLikes.remove(filmId);
-            } else {
-                filmsLikes.put(filmId, likes);
             }
         }
     }
 
     @Override
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
-        List<Film> returnFilms = new ArrayList<>();
-
-        if (filmsLikes.isEmpty()) {
-            for (Film film : films.values()) {
-                if (returnFilms.size() == sizeFilms) {
-                    break;
-                }
-                returnFilms.add(film);
-            }
-            return returnFilms;
-        }
-        List<Film> sortedFilmByLike = films.values()
+        return films.values()
                 .stream()
-                .sorted(Comparator.comparingInt(Film::getLikes))
-                .toList();
-        sortedFilmByLike = sortedFilmByLike.reversed();
-
-        for (Film film : sortedFilmByLike) {
-            if (returnFilms.size() == sizeFilms) {
-                break;
-            }
-            returnFilms.add(film);
-        }
-
-        if (returnFilms.size() == sortedFilmByLike.size()) {
-            return returnFilms;
-        }
-
-        for (Film film : films.values()) {
-            if (returnFilms.size() == sizeFilms) break;
-            returnFilms.add(film);
-        }
-        return returnFilms;
+                .sorted(Comparator.comparing(Film::getLikes).reversed())
+                .limit(sizeFilms)
+                .collect(Collectors.toList());
     }
 
     private void validateFilmId(Integer id) {
@@ -169,9 +139,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private void addLikeFilm(int filmId) {
         Film film = films.get(filmId);
-
         film.setLikes(film.getLikes() + 1);
-        films.put(filmId, film);
     }
 
     private void removeLikeFilm(int filmId) {
@@ -180,7 +148,6 @@ public class InMemoryFilmStorage implements FilmStorage {
 
         if (like != 0) {
             film.setLikes(like - 1);
-            films.put(filmId, film);
         }
     }
 
@@ -196,7 +163,6 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private Integer validateUpdate(Film film) {
         log.info("validateUpdate start for {}", film);
-        String newName = film.getName();
         if (film.getId() == null) {
             String msg = "Id должен быть указан";
             log.error(msg);
