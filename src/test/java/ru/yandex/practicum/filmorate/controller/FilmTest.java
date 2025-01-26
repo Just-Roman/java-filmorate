@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -23,11 +25,12 @@ public class FilmTest {
         validator = validatorFactory.usingContext().getValidator();
     }
 
-    private FilmController filmController;
+    private InMemoryFilmStorage inMemoryFilmStorage;
 
     @BeforeEach
     public void setUp() {
-        filmController = new FilmController();
+        InMemoryUserStorage inMemoryUserStorage = new InMemoryUserStorage();
+        inMemoryFilmStorage = new InMemoryFilmStorage(inMemoryUserStorage);
 
     }
 
@@ -77,11 +80,11 @@ public class FilmTest {
                 .description("Super description")
                 .releaseDate(LocalDate.of(1895, 12, 27))
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.create(film));
+        assertThrows(ValidationException.class, () -> inMemoryFilmStorage.create(film));
 
         film.setName("Fork");
         film.setReleaseDate(LocalDate.of(1895, 12, 28));
-        assertDoesNotThrow(() -> filmController.create(film));
+        assertDoesNotThrow(() -> inMemoryFilmStorage.create(film));
     }
 
     //    продолжительность фильма должна быть положительным числом.
@@ -112,7 +115,7 @@ public class FilmTest {
                 .build();
         Set<ConstraintViolation<Film>> violation = validator.validate(film);
         assertEquals(0, violation.size());
-        assertDoesNotThrow(() -> filmController.create(film));
+        assertDoesNotThrow(() -> inMemoryFilmStorage.create(film));
     }
 
     //  Правильный сценарий обновления
@@ -127,7 +130,7 @@ public class FilmTest {
                 .build();
         Set<ConstraintViolation<Film>> violation = validator.validate(film);
         assertEquals(0, violation.size());
-        assertDoesNotThrow(() -> filmController.create(film));
+        assertDoesNotThrow(() -> inMemoryFilmStorage.create(film));
 
 //        обновляем
         film.setId(1);
@@ -137,8 +140,8 @@ public class FilmTest {
         film.setDuration(2);
         Set<ConstraintViolation<Film>> violation2 = validator.validate(film);
         assertEquals(0, violation2.size());
-        assertDoesNotThrow(() -> filmController.update(film));
-        Film createdFilm = filmController.update(film);
+        assertDoesNotThrow(() -> inMemoryFilmStorage.update(film));
+        Film createdFilm = inMemoryFilmStorage.update(film);
         assertEquals(film.toString(), createdFilm.toString());
     }
 
