@@ -25,5 +25,6 @@ public class User {
     @Past
     @NotNull
     private LocalDate birthday;
+    String friendshipStatus;
 
 }

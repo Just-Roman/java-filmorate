@@ -16,7 +16,7 @@ public interface FilmStorage {
 
     Film update(Film filmUpdate);
 
-    Map<Film, Set<Integer>> addLike(int filmId, int userId);
+    boolean addLike(int filmId, int userId);
 
     void removeLike(Integer filmId, Integer userId);
 

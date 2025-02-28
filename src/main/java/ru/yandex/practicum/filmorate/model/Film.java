@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 @Builder
 @Data
@@ -23,6 +26,8 @@ public class Film {
     @Positive
     @NotNull
     private Integer duration;
-    private int likes;
+    private int likes_count;
+    List<Genre> genres;
+    MpaRating mpa;
 
 }
