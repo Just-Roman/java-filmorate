@@ -24,5 +24,4 @@ public interface UserStorage {
 
     Collection<User> getMutualFriends(int userId, int friendsId);
 
-    void validateUserId(int id);
 }

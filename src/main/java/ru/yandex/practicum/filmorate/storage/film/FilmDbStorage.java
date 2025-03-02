@@ -103,11 +103,7 @@ public class FilmDbStorage implements FilmStorage {
              SET name = ?, description = ?, release_date = ?, duration_minutes = ?, rating = ?
              WHERE id = ?
             """;
-    private static final String UPDATE_FILM_GENRE = """
-            UPDATE film_genre
-                 SET film_id = ?, genre_id = ?
-                 WHERE id = ?
-            """;
+
 
     private static final String DELETE_LIKE = "DELETE FROM film_like  WHERE user_id = ? AND film_id = ?";
     private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre WHERE film_id = ?";

@@ -10,10 +10,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+
 @Service
 public class UserService {
 
-    public UserService(@Qualifier("userDbStorage")UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
