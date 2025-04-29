@@ -66,7 +66,7 @@ public class UserDbStorage implements UserStorage {
     private static final String GET_BY_ID = "SELECT * FROM users WHERE id = ?;";
     private static final String GET_ALL = "SELECT * FROM users;";
 
-    String UPDATE_USERS = """
+    private static final String UPDATE_USERS = """
              UPDATE users
              SET email = ?, login = ?, name = ?, birthday = ?
              WHERE id = ?
