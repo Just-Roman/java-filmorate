@@ -43,7 +43,7 @@ public class FilmRowMapper implements RowMapper<Film> {
                 .description(resultSet.getString("description"))
                 .releaseDate(releaseDate.toLocalDateTime().toLocalDate())
                 .duration(resultSet.getInt("duration_minutes"))
-                .likes_count(resultSet.getInt("likes_count"))
+                .likesCount(resultSet.getInt("likes_count"))
                 .mpa(mpa.geById(resultSet.getInt("mpa_id")))
                 .genres(genres)
                 .build();

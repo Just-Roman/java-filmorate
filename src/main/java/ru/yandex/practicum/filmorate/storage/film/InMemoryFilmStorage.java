@@ -121,7 +121,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
         return films.values()
                 .stream()
-                .sorted(Comparator.comparing(Film::getLikes_count).reversed())
+                .sorted(Comparator.comparing(Film::getLikesCount).reversed())
                 .limit(sizeFilms)
                 .collect(Collectors.toList());
     }
@@ -139,15 +139,15 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private void addLikeFilm(int filmId) {
         Film film = films.get(filmId);
-        film.setLikes_count(film.getLikes_count() + 1);
+        film.setLikesCount(film.getLikesCount() + 1);
     }
 
     private void removeLikeFilm(int filmId) {
         Film film = films.get(filmId);
-        int like = film.getLikes_count();
+        int like = film.getLikesCount();
 
         if (like != 0) {
-            film.setLikes_count(like - 1);
+            film.setLikesCount(like - 1);
         }
     }
 

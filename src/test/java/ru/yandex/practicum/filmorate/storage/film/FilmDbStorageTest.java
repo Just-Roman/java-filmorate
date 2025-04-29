@@ -139,7 +139,7 @@ class FilmDbStorageTest {
         Film film = filmDbStorage.getFilmById(createdFilmId);
 
 //        Assert
-        Assertions.assertThat(film.getLikes_count()).isEqualTo(0);
+        Assertions.assertThat(film.getLikesCount()).isEqualTo(0);
     }
 
     @Test
@@ -158,7 +158,7 @@ class FilmDbStorageTest {
 
 //        Assert
         Assertions.assertThat(filmsByLike.size()).isEqualTo(2);
-        Assertions.assertThat(filmsByLike.getFirst().getLikes_count()).isEqualTo(2);
-        Assertions.assertThat(filmsByLike.getLast().getLikes_count()).isEqualTo(0);
+        Assertions.assertThat(filmsByLike.getFirst().getLikesCount()).isEqualTo(2);
+        Assertions.assertThat(filmsByLike.getLast().getLikesCount()).isEqualTo(0);
     }
 }

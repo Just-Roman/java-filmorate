@@ -24,7 +24,7 @@ public class Film {
     @Positive
     @NotNull
     private Integer duration;
-    private int likes_count;
+    private int likesCount;
     List<Genre> genres;
     MpaRating mpa;
 
