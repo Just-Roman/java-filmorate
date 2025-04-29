@@ -54,9 +54,7 @@ public class UserDbStorage implements UserStorage {
             FROM friendship
             WHERE first_user_id = ?
               AND status = true
-                    
             INTERSECT
-                    
             SELECT second_user_id AS friend_id
             FROM friendship
             WHERE first_user_id = ?
