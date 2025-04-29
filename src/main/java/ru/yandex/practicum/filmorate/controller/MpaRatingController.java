@@ -15,12 +15,12 @@ import java.util.Collection;
 @RestController
 @RequestMapping("/mpa")
 @RequiredArgsConstructor
-public class MpaRatingHandler {
+public class MpaRatingController {
     private final MpaRatingService mpaRatingService;
 
     @GetMapping("/{id}")
-    public MpaRating getNameById(@PathVariable Integer id) {
-        return mpaRatingService.getNameById(id);
+    public MpaRating getById(@PathVariable Integer id) {
+        return mpaRatingService.getById(id);
     }
 
     @GetMapping

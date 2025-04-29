@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 public class MpaRatingDbStorage {
+
     protected final JdbcTemplate jdbc;
 
     public MpaRatingDbStorage(JdbcTemplate jdbc) {
@@ -22,7 +23,7 @@ public class MpaRatingDbStorage {
     private static final String CHECK_ID = "SELECT id FROM mpa WHERE id = ?;";
     private static final String GET_ALL = "SELECT * FROM mpa ORDER BY  id ;";
 
-    public MpaRating getNameById(Integer id) {
+    public MpaRating geById(Integer id) {
         validateMpaId(id);
         return jdbc.queryForObject(GET_BY_ID, MpaRatingDbStorage::getMpaRatingMapper, id);
     }

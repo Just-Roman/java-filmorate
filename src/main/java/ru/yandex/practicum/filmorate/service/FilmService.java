@@ -20,6 +20,10 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
+    public Film getFilmById(int id) {
+        return filmStorage.getFilmById(id);
+    }
+
     public Film create(Film film) {
         return filmStorage.create(film);
     }

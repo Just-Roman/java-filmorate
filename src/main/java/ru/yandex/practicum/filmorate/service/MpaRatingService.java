@@ -12,8 +12,8 @@ import java.util.Collection;
 public class MpaRatingService {
     private final MpaRatingDbStorage mpaRatingDbStorage;
 
-    public MpaRating getNameById(Integer id) {
-        return mpaRatingDbStorage.getNameById(id);
+    public MpaRating getById(Integer id) {
+        return mpaRatingDbStorage.geById(id);
     }
 
     public Collection<MpaRating> getAll() {

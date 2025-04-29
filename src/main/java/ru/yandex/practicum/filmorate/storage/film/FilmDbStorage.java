@@ -6,21 +6,27 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.sql.Date;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class FilmDbStorage implements FilmStorage {
     protected final JdbcTemplate jdbc;
+    private final FilmRowMapper rowMapper;
 
-    public FilmDbStorage(JdbcTemplate jdbc) {
+    public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper rowMapper) {
         this.jdbc = jdbc;
+        this.rowMapper = rowMapper;
     }
 
     private final LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
@@ -71,26 +77,20 @@ public class FilmDbStorage implements FilmStorage {
             """;
 
     private static final String GET_FILM_BY_LIKES = """
-            SELECT\s
+            SELECT
                    f.id AS film_id,
                    f.name AS film_name,
                    f.description,
                    f.release_date,
                    f.duration_minutes,
-                   f.likes_count,
                    f.rating AS mpa_id,
                    COUNT(fl.user_id) AS likes_count,
                    COALESCE(STRING_AGG(fg.genre_id, ', '), '') AS genre_ids
-               FROM\s
-                   film f
-               LEFT JOIN\s
-                   film_like fl ON f.id = fl.film_id
-               LEFT JOIN\s
-                   film_genre fg ON f.id = fg.film_id
-               GROUP BY\s
-                   f.id, f.name, f.description, f.release_date, f.duration_minutes, f.likes_count, f.rating
-               ORDER BY\s
-                   likes_count DESC
+            FROM film f
+            LEFT JOIN film_like fl ON f.id = fl.film_id
+            LEFT JOIN film_genre fg ON f.id = fg.film_id
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration_minutes, f.likes_count, f.rating
+            ORDER BY likes_count DESC
             LIMIT ?;
             """;
 
@@ -104,6 +104,13 @@ public class FilmDbStorage implements FilmStorage {
              WHERE id = ?
             """;
 
+    private static final String CHECK_DUPLICATE_FILM_GENRE = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM film_genre
+                WHERE film_id = ? AND genre_id = ?
+            ) AS record_exists;
+            """;
 
     private static final String DELETE_LIKE = "DELETE FROM film_like  WHERE user_id = ? AND film_id = ?";
     private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre WHERE film_id = ?";
@@ -114,12 +121,12 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getAll() {
-        return jdbc.query(GET_ALL, FilmDbStorage::getFilmMapper);
+        return jdbc.query(GET_ALL, rowMapper);
     }
 
     @Override
     public Film getFilmById(int id) {
-        return jdbc.queryForObject(GET_BY_ID, FilmDbStorage::getFilmMapper, id);
+        return jdbc.queryForObject(GET_BY_ID, rowMapper, id);
     }
 
     @Override
@@ -144,8 +151,7 @@ public class FilmDbStorage implements FilmStorage {
         if (film.getGenres() != null) {
             createGenre(film.getGenres(), id);
         }
-
-        return jdbc.queryForObject(GET_BY_ID, FilmDbStorage::getFilmMapper, id);
+        return getFilmById(id);
     }
 
     @Override
@@ -165,7 +171,7 @@ public class FilmDbStorage implements FilmStorage {
             deleteGenre(id);
             createGenre(filmUpdate.getGenres(), id);
         }
-        return jdbc.queryForObject(GET_BY_ID, FilmDbStorage::getFilmMapper, id);
+        return getFilmById(id);
     }
 
     @Override
@@ -188,54 +194,30 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
-        return Collections.singleton(jdbc.queryForObject(GET_FILM_BY_LIKES, FilmDbStorage::getFilmMapper, sizeFilms));
+        return jdbc.query(GET_FILM_BY_LIKES, rowMapper, sizeFilms);
     }
-
-    private static Film getFilmMapper(ResultSet resultSet, int rowNum) throws SQLException {
-        Timestamp releaseDate = resultSet.getTimestamp("release_date");
-
-        String genreIds = resultSet.getString("genre_ids");
-        List<Genre> genres = new ArrayList<>();
-        if (!genreIds.isEmpty()) {
-            String[] genreIdsArray = genreIds.split(",\\s*");
-            for (String id : genreIdsArray) {
-                genres.add(Genre.builder()
-                        .id(Integer.parseInt(id))
-                        .build());
-            }
-        }
-
-        return Film.builder()
-                .id(resultSet.getInt("film_id"))
-                .name(resultSet.getString("film_name"))
-                .description(resultSet.getString("description"))
-                .releaseDate(releaseDate.toLocalDateTime().toLocalDate())
-                .duration(resultSet.getInt("duration_minutes"))
-                .likes_count(resultSet.getInt("likes_count"))
-                .mpa(MpaRating
-                        .builder()
-                        .id(resultSet.getInt("mpa_id"))
-                        .build())
-                .genres(genres)
-                .build();
-    }
-
 
     private static Integer getMaxIdMapper(ResultSet resultSet, int rowNum) throws SQLException {
         return resultSet.getInt("id");
     }
 
+    private static Boolean checkDuplicateGenre(ResultSet resultSet, int rowNum) throws SQLException {
+        return resultSet.getBoolean("record_exists");
+    }
+
     private void createGenre(List<Genre> genre, Integer idFilm) {
         for (Genre genres : genre) {
             validateIdGenre(genres.getId());
-            KeyHolder keyHolder = new GeneratedKeyHolder();
+            if (!validateDuplicateGenre(idFilm, genres.getId())) {
+                KeyHolder keyHolder = new GeneratedKeyHolder();
 
-            jdbc.update(connection -> {
-                PreparedStatement stmt2 = connection.prepareStatement(INSERT_FILM_GENRE);
-                stmt2.setInt(1, idFilm);
-                stmt2.setInt(2, genres.getId());
-                return stmt2;
-            }, keyHolder);
+                jdbc.update(connection -> {
+                    PreparedStatement stmt2 = connection.prepareStatement(INSERT_FILM_GENRE);
+                    stmt2.setInt(1, idFilm);
+                    stmt2.setInt(2, genres.getId());
+                    return stmt2;
+                }, keyHolder);
+            }
         }
     }
 
@@ -265,6 +247,10 @@ public class FilmDbStorage implements FilmStorage {
         if (id > maxId) {
             throw new NotFoundException("Ваш id = " + id + " в таблице genres не найден");
         }
+    }
+
+    private Boolean validateDuplicateGenre(Integer filmId, Integer genreId) {
+        return jdbc.queryForObject(CHECK_DUPLICATE_FILM_GENRE, FilmDbStorage::checkDuplicateGenre, filmId, genreId);
     }
 
     private void deleteGenre(Integer filmId) {

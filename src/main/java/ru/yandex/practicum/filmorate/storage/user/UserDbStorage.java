@@ -10,10 +10,7 @@ import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,6 +21,7 @@ public class UserDbStorage implements UserStorage {
     public UserDbStorage(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
+
     private static final String GET_EMAIL = "SELECT email FROM users WHERE email = ?;";
     private static final String GET_ID = "SELECT id FROM users WHERE id = ?;";
     private static final String INSERT_USERS = "INSERT INTO users (email, login, name, " +
@@ -33,7 +31,7 @@ public class UserDbStorage implements UserStorage {
             VALUES (?, ?, ?)
             """;
 
-    private static final String UPDATE_STATUS_FRIENDSHIP  = """
+    private static final String UPDATE_STATUS_FRIENDSHIP = """
              UPDATE friendship
              SET  status ?
              WHERE first_user_id = ?, second_user_id = ?
@@ -51,19 +49,19 @@ public class UserDbStorage implements UserStorage {
             WHERE first_user_id = ?  AND status = true;
             """;
 
-private static final String GET_MUTUAL_FRIENDS = """
-        SELECT second_user_id AS friend_id
-        FROM friendship
-        WHERE first_user_id = ?
-          AND status = true
-        
-        INTERSECT
-        
-        SELECT second_user_id AS friend_id
-        FROM friendship
-        WHERE first_user_id = ?
-          AND status = true;
-        """;
+    private static final String GET_MUTUAL_FRIENDS = """
+            SELECT second_user_id AS friend_id
+            FROM friendship
+            WHERE first_user_id = ?
+              AND status = true
+                    
+            INTERSECT
+                    
+            SELECT second_user_id AS friend_id
+            FROM friendship
+            WHERE first_user_id = ?
+              AND status = true;
+            """;
 
     private static final String GET_BY_ID = "SELECT * FROM users WHERE id = ?;";
     private static final String GET_ALL = "SELECT * FROM users;";
@@ -108,7 +106,7 @@ private static final String GET_MUTUAL_FRIENDS = """
 
         if ((user.getFriends() != null)) {
             Set<Integer> ids = user.getFriends();
-            for (Integer idFriend: ids) {
+            for (Integer idFriend : ids) {
                 addToFriend(id, idFriend);
             }
         }
@@ -134,13 +132,11 @@ private static final String GET_MUTUAL_FRIENDS = """
 
     @Override
     public Map<User, Set<Integer>> addToFriend(int userId, int friendsId) {
-        int fd =1;
         validateUserId(userId);
         validateUserId(friendsId);
         List<Friendship> friendships = jdbc.query(GET_FRIENDSHIP_BY_IDS,
                 UserDbStorage::getFriendshipMapper, userId, friendsId);
         KeyHolder keyHolder = new GeneratedKeyHolder();
-
 
         if (friendships.isEmpty()) {
             jdbc.update(connection -> {
@@ -194,7 +190,7 @@ private static final String GET_MUTUAL_FRIENDS = """
 
         if (friends != null) {
             String[] ids = friends.split(",\\s*");
-            for (String id: ids) {
+            for (String id : ids) {
                 User user = jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, Integer.parseInt(id));
                 users.add(user);
             }
@@ -210,19 +206,16 @@ private static final String GET_MUTUAL_FRIENDS = """
         List<Integer> friends = jdbc.queryForList(GET_MUTUAL_FRIENDS, Integer.class, userId, friendsId);
         List<User> users = new ArrayList<>();
         if (!friends.isEmpty()) {
-            for (Integer id: friends) {
+            for (Integer id : friends) {
                 User user = jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, id);
                 users.add(user);
             }
         }
         return users;
-
     }
-
 
     private static User getUserMapper(ResultSet resultSet, int rowNum) throws SQLException {
         Timestamp birthday = resultSet.getTimestamp("birthday");
-
 
         return User.builder()
                 .id(resultSet.getInt("id"))
@@ -233,7 +226,7 @@ private static final String GET_MUTUAL_FRIENDS = """
                 .build();
     }
 
-    private static Friendship  getFriendshipMapper (ResultSet resultSet, int rowNum) throws SQLException {
+    private static Friendship getFriendshipMapper(ResultSet resultSet, int rowNum) throws SQLException {
 
         return Friendship.builder()
                 .firstUserId(resultSet.getInt("first_user_id"))
@@ -242,15 +235,14 @@ private static final String GET_MUTUAL_FRIENDS = """
                 .build();
     }
 
-
     private void cloneSearchEmail(String newEmail) {
         List<String> emails = jdbc.queryForList(GET_EMAIL, String.class, newEmail);
         if (!emails.isEmpty()) {
-                throw new ValidationException("Этот Email уже используется");
+            throw new ValidationException("Этот Email уже используется");
         }
     }
 
-    public void validateUserId(int id) {
+    private void validateUserId(int id) {
         List<Integer> ids = jdbc.queryForList(GET_ID, Integer.class, id);
 
         if (ids.isEmpty()) {
@@ -263,33 +255,6 @@ private static final String GET_MUTUAL_FRIENDS = """
             user.setName(user.getLogin());
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }
