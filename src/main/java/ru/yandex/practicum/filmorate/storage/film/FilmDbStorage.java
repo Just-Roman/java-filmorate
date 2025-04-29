@@ -98,7 +98,7 @@ public class FilmDbStorage implements FilmStorage {
             "duration_minutes, rating) VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_FILM_GENRE = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
     private static final String INSERT_LIKE = "INSERT INTO film_like (user_id, film_id) VALUES (?, ?)";
-    String UPDATE_FILM = """
+    private static final String UPDATE_FILM = """
              UPDATE film
              SET name = ?, description = ?, release_date = ?, duration_minutes = ?, rating = ?
              WHERE id = ?
