@@ -13,7 +13,6 @@ import java.util.Set;
 @Builder
 @Data
 public class User {
-
     private Integer id;
     @NotNull
     @NotBlank
@@ -26,6 +25,5 @@ public class User {
     @Past
     @NotNull
     private LocalDate birthday;
-    Set<Integer> friends;
-
+    private Set<Integer> friends;
 }

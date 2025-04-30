@@ -24,14 +24,14 @@ public class GenreDbStorage {
 
     public Genre getById(Integer id) {
         validateId(id);
-        return jdbc.queryForObject(GET_BY_ID, GenreDbStorage::getGenreMapper, id);
+        return jdbc.queryForObject(GET_BY_ID, this::getGenreMapper, id);
     }
 
     public Collection<Genre> getAll() {
-        return jdbc.query(GET_ALL, GenreDbStorage::getGenreMapper);
+        return jdbc.query(GET_ALL, this::getGenreMapper);
     }
 
-    private static Genre getGenreMapper(ResultSet resultSet, int rowNum) throws SQLException {
+    private Genre getGenreMapper(ResultSet resultSet, int rowNum) throws SQLException {
         return Genre.builder()
                 .id(resultSet.getInt("id"))
                 .name(resultSet.getString("title"))
@@ -44,6 +44,5 @@ public class GenreDbStorage {
             throw new NotFoundException("Жанр с id = " + id + " не найден");
         }
     }
-
 
 }

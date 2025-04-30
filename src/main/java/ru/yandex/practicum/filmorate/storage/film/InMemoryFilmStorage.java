@@ -29,7 +29,6 @@ public class InMemoryFilmStorage implements FilmStorage {
         return id++;
     }
 
-
     @Override
     public Collection<Film> getAll() {
         log.info("GET, all films");

@@ -25,7 +25,6 @@ public class Film {
     @NotNull
     private Integer duration;
     private int likesCount;
-    List<Genre> genres;
-    MpaRating mpa;
-
+    private List<Genre> genres;
+    private MpaRating mpa;
 }

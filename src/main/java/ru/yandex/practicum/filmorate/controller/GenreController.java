@@ -27,5 +27,4 @@ public class GenreController {
         return genreService.getAll();
     }
 
-
 }

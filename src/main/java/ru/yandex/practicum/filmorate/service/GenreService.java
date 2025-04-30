@@ -10,7 +10,6 @@ import java.util.Collection;
 @Service
 @RequiredArgsConstructor
 public class GenreService {
-
     private final GenreDbStorage genreDbStorage;
 
     public Genre getById(Integer id) {
@@ -20,15 +19,5 @@ public class GenreService {
     public Collection<Genre> getAll() {
         return genreDbStorage.getAll();
     }
-
-
-
-
-
-
-
-
-
-
 
 }

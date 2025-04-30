@@ -25,15 +25,15 @@ public class MpaRatingDbStorage {
 
     public MpaRating geById(Integer id) {
         validateMpaId(id);
-        return jdbc.queryForObject(GET_BY_ID, MpaRatingDbStorage::getMpaRatingMapper, id);
+        return jdbc.queryForObject(GET_BY_ID, this::getMpaRatingMapper, id);
     }
 
     public Collection<MpaRating> getAll() {
-        return jdbc.query(GET_ALL, MpaRatingDbStorage::getMpaRatingMapper);
+        return jdbc.query(GET_ALL, this::getMpaRatingMapper);
     }
 
 
-    private static MpaRating getMpaRatingMapper(ResultSet resultSet, int rowNum) throws SQLException {
+    private MpaRating getMpaRatingMapper(ResultSet resultSet, int rowNum) throws SQLException {
         return MpaRating.builder()
                 .id(resultSet.getInt("id"))
                 .name(resultSet.getString("title"))

@@ -31,17 +31,20 @@ public class FilmDbStorage implements FilmStorage {
 
     private final LocalDate birthdayFilm = LocalDate.of(1895, 12, 28);
 
-    private static final String GET_BY_ID = """
-               SELECT
+    private static final String GET_GENERAL = """
+            SELECT
                    f.id AS film_id,
                    f.name AS film_name,
                    f.description,
                    f.release_date,
                    f.duration_minutes,
+            """;
+
+    private static final String GET_BY_ID = GET_GENERAL + """
                    f.likes_count,
                    f.rating AS mpa_id,
                    COUNT(fl.user_id) AS likes_count,
-                   COALESCE(STRING_AGG(fg.genre_id, ', '), '') AS genre_ids\s
+                   COALESCE(STRING_AGG(fg.genre_id, ', '), '') AS genre_ids
                FROM
                    film f
                LEFT JOIN
@@ -53,36 +56,24 @@ public class FilmDbStorage implements FilmStorage {
                    f.id, f.name, f.description, f.release_date, f.duration_minutes, f.likes_count, f.rating;
             """;
 
-    private static final String GET_ALL = """
-            SELECT\s
-                   f.id AS film_id,
-                   f.name AS film_name,
-                   f.description,
-                   f.release_date,
-                   f.duration_minutes,
+    private static final String GET_ALL = GET_GENERAL + """
                    f.likes_count,
                    f.rating AS mpa_id,
                    COUNT(fl.user_id) AS likes_count,
                    COALESCE(STRING_AGG(fg.genre_id, ', '), '') AS genre_ids
-               FROM\s
+               FROM
                    film f
-               LEFT JOIN\s
+               LEFT JOIN
                    film_like fl ON f.id = fl.film_id
-               LEFT JOIN\s
+               LEFT JOIN
                    film_genre fg ON f.id = fg.film_id
-               GROUP BY\s
+               GROUP BY
                    f.id, f.name, f.description, f.release_date, f.duration_minutes, f.likes_count, f.rating
-               ORDER BY\s
+               ORDER BY
                    likes_count DESC;
             """;
 
-    private static final String GET_FILM_BY_LIKES = """
-            SELECT
-                   f.id AS film_id,
-                   f.name AS film_name,
-                   f.description,
-                   f.release_date,
-                   f.duration_minutes,
+    private static final String GET_FILM_BY_LIKES = GET_GENERAL + """
                    f.rating AS mpa_id,
                    COUNT(fl.user_id) AS likes_count,
                    COALESCE(STRING_AGG(fg.genre_id, ', '), '') AS genre_ids
@@ -115,9 +106,20 @@ public class FilmDbStorage implements FilmStorage {
     private static final String DELETE_LIKE = "DELETE FROM film_like  WHERE user_id = ? AND film_id = ?";
     private static final String DELETE_FILM_GENRE = "DELETE FROM film_genre WHERE film_id = ?";
 
-    private static final String GET_MAX_ID_MPA = "SELECT MAX(id) AS id FROM mpa;";
-    private static final String GET_MAX_ID_GENRE = "SELECT MAX(id) AS id FROM genres;";
-
+    private static final String GET_MAX_ID_MPA = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM mpa
+                WHERE id = ?
+            ) AS id_exists;
+            """;
+    private static final String GET_MAX_ID_GENRE = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM genres
+                WHERE id = ?
+            ) AS id_exists;
+            """;
 
     @Override
     public Collection<Film> getAll() {
@@ -184,7 +186,6 @@ public class FilmDbStorage implements FilmStorage {
             stmt.setInt(2, filmId);
             return stmt;
         }, keyHolder) > 0;
-
     }
 
     @Override
@@ -197,11 +198,11 @@ public class FilmDbStorage implements FilmStorage {
         return jdbc.query(GET_FILM_BY_LIKES, rowMapper, sizeFilms);
     }
 
-    private static Integer getMaxIdMapper(ResultSet resultSet, int rowNum) throws SQLException {
-        return resultSet.getInt("id");
+    private Boolean heckIdMapper(ResultSet resultSet, int rowNum) throws SQLException {
+        return resultSet.getBoolean("id_exists");
     }
 
-    private static Boolean checkDuplicateGenre(ResultSet resultSet, int rowNum) throws SQLException {
+    private Boolean checkDuplicateGenre(ResultSet resultSet, int rowNum) throws SQLException {
         return resultSet.getBoolean("record_exists");
     }
 
@@ -221,7 +222,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-
     private void validateReleaseDate(Film film) {
         if (film.getReleaseDate().isBefore(birthdayFilm)) {
             String msg = "дата релиза — не раньше 28 декабря 1895 года";
@@ -230,32 +230,31 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private void validateIdMpa(Integer id) {
-        Integer maxId = jdbc.queryForObject(GET_MAX_ID_MPA, FilmDbStorage::getMaxIdMapper);
-        if (maxId == null) {
-            throw new NotFoundException("Таблица mpa пустая");
+        Boolean result = jdbc.queryForObject(GET_MAX_ID_MPA, this::heckIdMapper, id);
+        if (result == null) {
+            throw new NotFoundException("Ваш id = " + id + " в таблице mpa не найден");
         }
-        if (id > maxId) {
+        if (!result) {
             throw new NotFoundException("Ваш id = " + id + " в таблице mpa не найден");
         }
     }
 
     private void validateIdGenre(Integer id) {
-        Integer maxId = jdbc.queryForObject(GET_MAX_ID_GENRE, FilmDbStorage::getMaxIdMapper);
-        if (maxId == null) {
-            throw new NotFoundException("Таблица genres пустая");
+        Boolean result = jdbc.queryForObject(GET_MAX_ID_GENRE, this::heckIdMapper, id);
+        if (result == null) {
+            throw new NotFoundException("Ваш id = " + id + " в таблице genres не найден");
         }
-        if (id > maxId) {
+        if (!result) {
             throw new NotFoundException("Ваш id = " + id + " в таблице genres не найден");
         }
     }
 
     private Boolean validateDuplicateGenre(Integer filmId, Integer genreId) {
-        return jdbc.queryForObject(CHECK_DUPLICATE_FILM_GENRE, FilmDbStorage::checkDuplicateGenre, filmId, genreId);
+        return jdbc.queryForObject(CHECK_DUPLICATE_FILM_GENRE, this::checkDuplicateGenre, filmId, genreId);
     }
 
     private void deleteGenre(Integer filmId) {
         jdbc.update(DELETE_FILM_GENRE, filmId);
     }
-
 
 }

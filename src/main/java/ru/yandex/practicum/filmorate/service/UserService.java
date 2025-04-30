@@ -47,5 +47,4 @@ public class UserService {
         return userStorage.getMutualFriends(userId, friendsId);
     }
 
-
 }

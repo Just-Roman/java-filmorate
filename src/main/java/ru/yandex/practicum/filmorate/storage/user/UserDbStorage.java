@@ -76,12 +76,12 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Collection<User> getAll() {
-        return jdbc.query(GET_ALL, UserDbStorage::getUserMapper);
+        return jdbc.query(GET_ALL, this::getUserMapper);
     }
 
     @Override
     public User getUserById(int id) {
-        return jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, id);
+        return jdbc.queryForObject(GET_BY_ID, this::getUserMapper, id);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class UserDbStorage implements UserStorage {
             return stmt;
         }, keyHolder);
 
-        Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        int id = Objects.requireNonNull(keyHolder.getKey()).intValue();
         user.setId(id);
 
         if ((user.getFriends() != null)) {
@@ -109,7 +109,7 @@ public class UserDbStorage implements UserStorage {
             }
         }
 
-        return jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, id);
+        return jdbc.queryForObject(GET_BY_ID, this::getUserMapper, id);
     }
 
     @Override
@@ -125,15 +125,14 @@ public class UserDbStorage implements UserStorage {
                 id
         );
 
-        return jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, id);
+        return jdbc.queryForObject(GET_BY_ID, this::getUserMapper, id);
     }
 
     @Override
     public Map<User, Set<Integer>> addToFriend(int userId, int friendsId) {
         validateUserId(userId);
         validateUserId(friendsId);
-        List<Friendship> friendships = jdbc.query(GET_FRIENDSHIP_BY_IDS,
-                UserDbStorage::getFriendshipMapper, userId, friendsId);
+        List<Friendship> friendships = jdbc.query(GET_FRIENDSHIP_BY_IDS, this::getFriendshipMapper, userId, friendsId);
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         if (friendships.isEmpty()) {
@@ -167,7 +166,7 @@ public class UserDbStorage implements UserStorage {
         Set<Integer> friendIds = Arrays.stream(friends.split(","))
                 .map(Integer::parseInt)
                 .collect(Collectors.toSet());
-        User user = jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, userId);
+        User user = jdbc.queryForObject(GET_BY_ID, this::getUserMapper, userId);
         return Map.of(user, friendIds);
 
     }
@@ -189,7 +188,7 @@ public class UserDbStorage implements UserStorage {
         if (friends != null) {
             String[] ids = friends.split(",\\s*");
             for (String id : ids) {
-                User user = jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, Integer.parseInt(id));
+                User user = jdbc.queryForObject(GET_BY_ID, this::getUserMapper, Integer.parseInt(id));
                 users.add(user);
             }
         }
@@ -205,14 +204,14 @@ public class UserDbStorage implements UserStorage {
         List<User> users = new ArrayList<>();
         if (!friends.isEmpty()) {
             for (Integer id : friends) {
-                User user = jdbc.queryForObject(GET_BY_ID, UserDbStorage::getUserMapper, id);
+                User user = jdbc.queryForObject(GET_BY_ID, this::getUserMapper, id);
                 users.add(user);
             }
         }
         return users;
     }
 
-    private static User getUserMapper(ResultSet resultSet, int rowNum) throws SQLException {
+    private User getUserMapper(ResultSet resultSet, int rowNum) throws SQLException {
         Timestamp birthday = resultSet.getTimestamp("birthday");
 
         return User.builder()
@@ -224,7 +223,7 @@ public class UserDbStorage implements UserStorage {
                 .build();
     }
 
-    private static Friendship getFriendshipMapper(ResultSet resultSet, int rowNum) throws SQLException {
+    private Friendship getFriendshipMapper(ResultSet resultSet, int rowNum) throws SQLException {
 
         return Friendship.builder()
                 .firstUserId(resultSet.getInt("first_user_id"))
@@ -253,6 +252,5 @@ public class UserDbStorage implements UserStorage {
             user.setName(user.getLogin());
         }
     }
-
 
 }

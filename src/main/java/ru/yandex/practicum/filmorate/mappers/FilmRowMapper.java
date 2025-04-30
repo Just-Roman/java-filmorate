@@ -25,9 +25,7 @@ public class FilmRowMapper implements RowMapper<Film> {
 
     @Override
     public Film mapRow(ResultSet resultSet, int rowNum) throws SQLException {
-
         Timestamp releaseDate = resultSet.getTimestamp("release_date");
-
         String genreIds = resultSet.getString("genre_ids");
         List<Genre> genres = new ArrayList<>();
         if (!genreIds.isEmpty()) {

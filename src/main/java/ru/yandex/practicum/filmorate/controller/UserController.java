@@ -54,5 +54,4 @@ public class UserController {
         userService.removeFriend(userId, friendsId);
     }
 
-
 }

@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) NOT NULL UNIQUE,
     login VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(100),
-    birthday DATE NOT NULL,
-    friend_id INTEGER
+    birthday DATE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS genres (
