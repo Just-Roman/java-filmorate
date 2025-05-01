@@ -8,8 +8,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @RestController
@@ -22,6 +20,11 @@ public class FilmController {
     @GetMapping
     public Collection<Film> getAll() {
         return filmService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable int id) {
+        return filmService.getFilmById(id);
     }
 
     @GetMapping("/popular")
@@ -40,7 +43,7 @@ public class FilmController {
     }
 
     @PutMapping("/{filmId}/like/{userId}")
-    public Map<Film, Set<Integer>> addLike(@PathVariable int filmId, @PathVariable int userId) {
+    public boolean addLike(@PathVariable int filmId, @PathVariable int userId) {
         return filmService.addLike(filmId, userId);
     }
 
@@ -48,6 +51,5 @@ public class FilmController {
     public void removeLike(@PathVariable int filmId, @PathVariable int userId) {
         filmService.removeLike(filmId, userId);
     }
-
 
 }

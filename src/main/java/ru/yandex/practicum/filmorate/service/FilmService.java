@@ -1,42 +1,47 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
-@RequiredArgsConstructor
 @Service
 public class FilmService {
 
-    private final InMemoryFilmStorage inMemoryFilmStorage;
+    private final FilmStorage filmStorage;
+
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage) {
+        this.filmStorage = filmStorage;
+    }
 
     public Collection<Film> getAll() {
-        return inMemoryFilmStorage.getAll();
+        return filmStorage.getAll();
+    }
+
+    public Film getFilmById(int id) {
+        return filmStorage.getFilmById(id);
     }
 
     public Film create(Film film) {
-        return inMemoryFilmStorage.create(film);
+        return filmStorage.create(film);
     }
 
     public Film update(Film filmUpdate) {
-        return inMemoryFilmStorage.update(filmUpdate);
+        return filmStorage.update(filmUpdate);
     }
 
-    public Map<Film, Set<Integer>> addLike(int filmId, int userId) {
-        return inMemoryFilmStorage.addLike(filmId, userId);
+    public boolean addLike(int filmId, int userId) {
+        return filmStorage.addLike(filmId, userId);
     }
 
     public void removeLike(int filmId, int userId) {
-        inMemoryFilmStorage.removeLike(filmId, userId);
+        filmStorage.removeLike(filmId, userId);
     }
 
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
-        return inMemoryFilmStorage.getFilmsByLike(sizeFilms);
+        return filmStorage.getFilmsByLike(sizeFilms);
     }
 
 }

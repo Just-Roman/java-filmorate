@@ -141,7 +141,7 @@ public class InMemoryUserStorage implements UserStorage {
         return mutualFriends;
     }
 
-    @Override
+
     public void validateUserId(int id) {
         if (!users.containsKey(id)) {
             throw new NotFoundException("Пользователь с id: " + id + " не найден");

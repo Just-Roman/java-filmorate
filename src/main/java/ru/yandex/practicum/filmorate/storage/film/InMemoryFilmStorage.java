@@ -29,7 +29,6 @@ public class InMemoryFilmStorage implements FilmStorage {
         return id++;
     }
 
-
     @Override
     public Collection<Film> getAll() {
         log.info("GET, all films");
@@ -81,7 +80,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Map<Film, Set<Integer>> addLike(int filmId, int userId) {
+    public boolean addLike(int filmId, int userId) {
         inMemoryUserStorage.validateUserId(userId);
         validateFilmId(filmId);
 
@@ -99,7 +98,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             filmsLikes.put(filmId, likes);
         }
 
-        return Map.of(films.get(filmId), filmsLikes.get(filmId));
+        return filmsLikes.get(filmId).contains(userId);
     }
 
     @Override
@@ -121,7 +120,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Collection<Film> getFilmsByLike(Integer sizeFilms) {
         return films.values()
                 .stream()
-                .sorted(Comparator.comparing(Film::getLikes).reversed())
+                .sorted(Comparator.comparing(Film::getLikesCount).reversed())
                 .limit(sizeFilms)
                 .collect(Collectors.toList());
     }
@@ -139,15 +138,15 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private void addLikeFilm(int filmId) {
         Film film = films.get(filmId);
-        film.setLikes(film.getLikes() + 1);
+        film.setLikesCount(film.getLikesCount() + 1);
     }
 
     private void removeLikeFilm(int filmId) {
         Film film = films.get(filmId);
-        int like = film.getLikes();
+        int like = film.getLikesCount();
 
         if (like != 0) {
-            film.setLikes(like - 1);
+            film.setLikesCount(like - 1);
         }
     }
 
